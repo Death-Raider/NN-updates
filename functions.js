@@ -128,7 +128,7 @@ let mxPool1 = new MaxPool;
 
 let set = mnist.set(8000, 2000)
 let filter_count_1 = 4
-let filter_count_2 = 16
+let filter_count_2 = 32
 
 let f = []
 for(let i = 0; i<filter_count_1; i++) f.push(createMatrix(1,5,5,()=>Math.random()))
@@ -138,7 +138,7 @@ for(let i= 0; i<filter_count_2; i++) f2.push(createMatrix(filter_count_1,5,5,()=
 
 let network = new NeuralNetwork({
   input_nodes : 8*8*filter_count_2,
-  layer_count : [5000,100],
+  layer_count : [100,25],
   output_nodes :10,
   weight_bias_initilization_range : [-1,1]
 });

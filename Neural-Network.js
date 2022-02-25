@@ -9,9 +9,22 @@ class NeuralNetwork {
     this.WeightUpdates = copyRadar3D(parameters[0])
     this.Bias = copyRadar2D(parameters[1])
     this.BiasUpdates = copyRadar2D(parameters[1])
+    this.previousGrads = {
+        Weights: copyRadar3D(parameters[0]),
+        Bias: copyRadar2D(parameters[1])
+    }
     this.Activation = {
       hidden:[(x)=>(x>0)?x:x*0.1,(x)=>(x>0)?1:0.1],
       output:[(x)=>1/(1+Math.exp(-x)),(x)=>x*(1-x)]
+    }
+    this.loss_func = {
+        out: (X,Y,cost = 0)=>{
+            for(let m = 0; m < Y.length; m++) cost+=0.5*Math.pow(X[m]-Y[m],2);
+            return cost
+        },
+        derivative: (X,Y)=>{
+            return (X-Y)*this.Activation.output[1](X) // dY = 0
+        }
     }
     function createParameters(input,LayerCount,output,a,b){
       let MatrixW=[], MatrixB=[];
@@ -39,16 +52,15 @@ class NeuralNetwork {
     return activated;
   }
   changes(Desired,Output,DerivativeActivation){//backword pass
-    let cost=0;
-    for(let m = 0; m < Desired.length; m++) cost+=0.5*Math.pow(Output[m]-Desired[m],2);
+    let cost = this.loss_func.out(Output,Desired)
 
     for(let i = 0; i < this.Nodes[this.HiddenLayerCount.length + 1].length; i++){
-      this.BiasUpdates[this.Weights.length-1][i]=(this.Nodes[this.HiddenLayerCount.length+1][i]-Desired[i])*DerivativeActivation[1](this.Nodes[this.HiddenLayerCount.length+1][i]);
-      for(let j = 0; j < this.Nodes[this.HiddenLayerCount.length].length; j++) this.WeightUpdates[this.Weights.length-1][i][j]=(this.BiasUpdates[this.Weights.length-1][i]*this.Nodes[this.HiddenLayerCount.length][j]);
+      this.BiasUpdates[this.Weights.length-1][i] = this.loss_func.derivative(this.Nodes[this.HiddenLayerCount.length+1][i] , Desired[i]) // output node of model and desired nodes
+      for(let j = 0; j < this.Nodes[this.HiddenLayerCount.length].length; j++) this.WeightUpdates[this.Weights.length-1][i][j] = (this.BiasUpdates[this.Weights.length-1][i]*this.Nodes[this.HiddenLayerCount.length][j]);
     }
     for(let j = this.Weights.length - 2; j > -1; j--){//iterates of all layers except the last one
       for(let k = 0,sum = 0; k < this.Weights[j].length; k++,sum = 0){
-        for(let m = 0; m < this.Weights[j+1].length; m++) sum+=this.Weights[j+1][m][k]*this.WeightUpdates[j+1][m][k];
+        for(let m = 0; m < this.Weights[j+1].length; m++) sum += this.Weights[j+1][m][k]*this.WeightUpdates[j+1][m][k];
         this.BiasUpdates[j][k]= (sum*(DerivativeActivation[0](this.Nodes[j+1][k])))/((this.Nodes[j+1][k]==0)?1:this.Nodes[j+1][k]);
         for(let p = 0; p < this.Weights[j][k].length; p++) this.WeightUpdates[j][k][p] = this.BiasUpdates[j][k] * this.Nodes[j][p];
       }
@@ -71,26 +83,32 @@ class NeuralNetwork {
       }
     }
   }
-  train({TotalTrain=0,trainFunc=()=>{},TotalVal=0,validationFunc=()=>{},learning_rate=0.0005,batch_train = 1,batch_val = 1} = {}){
+  train({TotalTrain=0,trainFunc=()=>{},TotalVal=0,validationFunc=()=>{},learning_rate=0.0005,batch_train=1,batch_val=1,momentum=1}={}){
     let cost=[], cost_val=[], changing = [];
-    for(let i = 0; i < parseInt((TotalTrain/batch_train+TotalVal/batch_val)); i++){
-      let batch = (i < parseInt(TotalTrain/batch_train))?batch_train:batch_val;
+    for(let i = 0; i < Math.floor((TotalTrain/batch_train+TotalVal/batch_val)); i++){
+      let batch = (i < Math.floor(TotalTrain/batch_train))?batch_train:batch_val;
       let sumCost = 0;
       for(let b = 0; b < batch ; b++){
-        let [input,desir] = (i <= parseInt(TotalTrain/batch_train))?trainFunc(b,i):validationFunc(b,i);
+        let [input,desir] = (i <= Math.floor(TotalTrain/batch_train))?trainFunc(b,i):validationFunc(b,i);
         this.Nodes=this.GetLayerValues(input,[this.Activation.hidden[0],this.Activation.output[0]]);
-        changing[b]=this.changes(desir,this.Nodes[this.Nodes.length-1],[this.Activation.hidden[1],this.Activation.output[1]]);
+        changing[b] = this.changes(desir,this.Nodes[this.Nodes.length-1],[this.Activation.hidden[1],this.Activation.output[1]]);
         sumCost += changing[b].Cost/batch
       }
-      if(i < parseInt(TotalTrain/batch_train)){
+      if(i < Math.floor(TotalTrain/batch_train)){
         cost.push(sumCost);
         for(let x = 0; x < changing[0].updatedWeights.length; x++){
           for(let y = 0,sumBias = 0; y < changing[0].updatedWeights[x].length; y++,sumBias = 0){
             for(let z = 0,sumWeight = 0; z < changing[0].updatedWeights[x][y].length; z++,sumWeight = 0){
-              for(let b = 0; b < batch; b++)sumWeight += changing[b].updatedWeights[x][y][z]/batch
+              for(let b = 0; b < batch; b++){
+                  sumWeight = changing[b].updatedWeights[x][y][z]
+              }
+              sumWeight = this.previousGrads.Weights[x][y][z]*momentum + (1-momentum)*sumWeight
               this.WeightUpdates[x][y][z] = sumWeight;
             }
-            for(let b = 0; b < batch; b++)sumBias += changing[b].updatedBias[x][y]/batch
+            for(let b = 0; b < batch; b++){
+                sumBias += changing[b].updatedBias[x][y]
+            }
+            sumBias = this.previousGrads.Bias[x][y]*momentum + (1-momentum)*sumBias
             this.BiasUpdates[x][y] = sumBias;
           }
         }
@@ -313,11 +331,11 @@ class Convolution extends LinearAlgebra{
       let color,g;
       if(value == 0) color = Rgb(255,255,255)
       if(value < 0){
-          g = (value < -1)?0:parseInt((value+1)*255)
+          g = (value < -1)?0:Math.floor((value+1)*255)
           color = Rgb(g,g,255);
       }
       if(value > 0){
-          g = (value > 1)?255:parseInt(value*255)
+          g = (value > 1)?255:Math.floor(value*255)
           color = Rgb(255,255-g,255-g);
       }
       return color;

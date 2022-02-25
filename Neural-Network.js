@@ -8,6 +8,10 @@ class LinearAlgebra {
   vectorMatrixProduct(v,m){return v.map((e,i)=>this.scalarMatrixProduct(e,this.transpose(m)[i])).reduce((a,b)=>a.map( (x, i)=> x + b[i] ))}; //only depth 1 and 2
   matrixProduct(m1,m2){return m1.map(row => m2[0].map((_,i)=>this.vectorDotProduct( row, m2.map(e=>e[i]) )) )}
   kroneckerProduct(a,b,r=[],t=[]) {return a.map(a=>b.map(b=>a.map(y=>b.map(x=>r.push(y*x)),t.push(r=[]))))&&t}
+  flip(matrix){
+    let reversed=(a)=>a.slice(0).reverse()
+    return reversed(matrix).map(reversed)
+  }
   minor(m,i=0,j=0,s=m.length-1){return Array(s).fill(0).map((e,p)=>{
       let l = m[p+(p>=i?1:0)].slice()
       l.splice(j,1)
@@ -327,58 +331,6 @@ class Convolution extends LinearAlgebra{
       }
       stream.write(JSON.stringify(data))
       stream.end()
-  }
-  drawFilters(folder,starter){
-    function Rgb(r,g,b){
-      r = r.toString(16);
-      g = g.toString(16);
-      b = b.toString(16);
-      if (r.length == 1)
-      r = "0" + r;
-      if (g.length == 1)
-      g = "0" + g;
-      if (b.length == 1)
-      b = "0" + b;
-      return "#" + r + g + b;
-    }
-    function addColor(value){
-      let color,g;
-      if(value == 0) color = Rgb(255,255,255)
-      if(value < 0){
-          g = (value < -1)?0:Math.floor((value+1)*255)
-          color = Rgb(g,g,255);
-      }
-      if(value > 0){
-          g = (value > 1)?255:Math.floor(value*255)
-          color = Rgb(255,255-g,255-g);
-      }
-      return color;
-    }
-    function drawMatrix(M,folder,name){
-      const {createCanvas} = require('canvas');
-      const fs = require("fs")
-
-      const save = (canvas,folder,name)=>{
-        const buffer = canvas.toBuffer('image/png')
-        fs.writeFileSync(`${folder}\\${name}.png`, buffer)
-        return true
-      }
-      for(let l = 0; l < M.length; l++){
-        let canvas = createCanvas(M[l].length, M[l][0].length)
-        let ctx = canvas.getContext('2d')
-        for(let k = 0; k < M[l].length; k++){
-          for(let p = 0; p < M[l][0].length; p++){
-            ctx.fillStyle = addColor(M[l][k][p])
-            ctx.fillRect(p,k,1,1)
-          }
-        }
-        save(canvas,folder,`${name}_${l}`)
-      }
-    }
-    this.F.forEach((e,i)=>{
-        e = super.reconstructMatrix(e,{x:this.f_shape[0],y:this.f_shape[1],z:this.f_shape[2]})
-        drawMatrix(e,folder,`${starter}_${i}`)
-    })
   }
 }
 class MaxPool extends LinearAlgebra{

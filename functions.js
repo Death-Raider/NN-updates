@@ -210,82 +210,84 @@ function backword_pass(){
 
     return {grads_y3,grads_y2,grads_y1,grads_x}
 }
-for(let epoch = 0; epoch < EPOCH; epoch++){
-    acc = {t:0,f:0}
-    let bar1 = new cliProgress.SingleBar({
-        format: 'Epoch:{epoch} [{bar}] {percentage}% | ETA: {eta}s | {value}/{total} | Acc: {acc}% | Loss: {loss}'
-    }, cliProgress.Presets.shades_classic);
-    bar1.start(set.training.length, 0,{
-        epoch:epoch,
-        acc:acc.t*BATCH_SIZE/10,
-        loss:0
-    })
-    for(let step = 0; step < set.training.length; step++){
-        //------forward pass------//
-        let x = La.normalize(set.training[step].input,-1,1)
-        x = La.reconstructMatrix(x,{x:28,y:28,z:1})
-        let desired = set.training[step].output
+function Train(){
+    for(let epoch = 0; epoch < EPOCH; epoch++){
+        acc = {t:0,f:0}
+        let bar1 = new cliProgress.SingleBar({
+            format: 'Epoch:{epoch} [{bar}] {percentage}% | ETA: {eta}s | {value}/{total} | Acc: {acc}% | Loss: {loss}'
+        }, cliProgress.Presets.shades_classic);
+        bar1.start(set.training.length, 0,{
+            epoch:epoch,
+            acc:acc.t*BATCH_SIZE/10,
+            loss:0
+        })
+        for(let step = 0; step < set.training.length; step++){
+            //------forward pass------//
+            let x = La.normalize(set.training[step].input,-1,1)
+            x = La.reconstructMatrix(x,{x:28,y:28,z:1})
+            let desired = set.training[step].output
 
-        let [y1,y2,y3,out, pred] = forward_pass(x,desired)
-        cost = out.Cost.toFixed(3)
-        //------backword pass------//
+            let [y1,y2,y3,out, pred] = forward_pass(x,desired)
+            cost = out.Cost.toFixed(3)
+            //------backword pass------//
 
-        if(step%1000 == 0){
-            acc = {t:0,f:0}
-            fs.writeFileSync('logs\\Info.json', JSON.stringify(Data));
-        }
-
-        if( step%BATCH_SIZE == 0){
-            if(step != 0){
-                let WeightUpdate =  BATCH_Stack.FullyConnected[0].WeightUpdate
-                let BiasUpdate =  BATCH_Stack.FullyConnected[0].BiasUpdate
-                let F1 = BATCH_Stack.Filters[0].grads_y1
-                let F2 = BATCH_Stack.Filters[0].grads_y3
-                for(let i = 1; i< BATCH_SIZE; i++){
-                    WeightUpdate = add(WeightUpdate,BATCH_Stack.FullyConnected[i].WeightUpdate)
-                    BiasUpdate = add(BiasUpdate,BATCH_Stack.FullyConnected[i].BiasUpdate)
-                    F1 = add(F1,BATCH_Stack.Filters[i].grads_y1)
-                    F2 = add(F2,BATCH_Stack.Filters[i].grads_y3)
-                }
-                // console.log( Math.max(...WeightUpdate.flat(Infinity) )  )
-                // console.log( Math.max(...BiasUpdate.flat(Infinity) )  )
-                // console.log( Math.max(...F1.flat(Infinity) )  )
-                // console.log( Math.max(...F2.flat(Infinity) )  )
-                network.update(WeightUpdate,BiasUpdate,0.01);
-                conv2.filterGrads(F2,1e-3)
-                conv2.F = La.normalize(conv2.F,-1,1)
-                conv.filterGrads(F1,1e-3)
-                conv.F = La.normalize(conv.F,-1,1)
-
-                if(pred.indexOf(Math.max(...pred))==desired.indexOf(Math.max(...desired))){
-                    acc.t += 1
-                }else{
-                    acc.f += 1
-                }
-                if (Data[epoch] === undefined) Data[epoch] = {cost:[],pred:[],true:[],step:[],acc:[]};
-
-                Data[epoch].cost.push(parseFloat(out.Cost.toFixed(3)))
-                Data[epoch].pred.push(pred.indexOf(Math.max(...pred)))
-                Data[epoch].true.push(desired.indexOf(Math.max(...desired)))
-                Data[epoch].step.push(step)
-                Data[epoch].acc.push(parseFloat((acc.t/(1000/BATCH_SIZE)).toFixed(3)))
+            if(step%1000 == 0){
+                acc = {t:0,f:0}
+                fs.writeFileSync('logs\\Info.json', JSON.stringify(Data));
             }
-            BATCH_Stack.Filters = []
-            BATCH_Stack.FullyConnected = []
-            bar1.increment(BATCH_SIZE,{epoch:epoch,loss:out.Cost.toFixed(3),acc:acc.t*BATCH_SIZE/10})
+
+            if( step%BATCH_SIZE == 0){
+                if(step != 0){
+                    let WeightUpdate =  BATCH_Stack.FullyConnected[0].WeightUpdate
+                    let BiasUpdate =  BATCH_Stack.FullyConnected[0].BiasUpdate
+                    let F1 = BATCH_Stack.Filters[0].grads_y1
+                    let F2 = BATCH_Stack.Filters[0].grads_y3
+                    for(let i = 1; i< BATCH_SIZE; i++){
+                        WeightUpdate = add(WeightUpdate,BATCH_Stack.FullyConnected[i].WeightUpdate)
+                        BiasUpdate = add(BiasUpdate,BATCH_Stack.FullyConnected[i].BiasUpdate)
+                        F1 = add(F1,BATCH_Stack.Filters[i].grads_y1)
+                        F2 = add(F2,BATCH_Stack.Filters[i].grads_y3)
+                    }
+                    // console.log( Math.max(...WeightUpdate.flat(Infinity) )  )
+                    // console.log( Math.max(...BiasUpdate.flat(Infinity) )  )
+                    // console.log( Math.max(...F1.flat(Infinity) )  )
+                    // console.log( Math.max(...F2.flat(Infinity) )  )
+                    network.update(WeightUpdate,BiasUpdate,0.01);
+                    conv2.filterGrads(F2,1e-3)
+                    conv2.F = La.normalize(conv2.F,-1,1)
+                    conv.filterGrads(F1,1e-3)
+                    conv.F = La.normalize(conv.F,-1,1)
+
+                    if(pred.indexOf(Math.max(...pred))==desired.indexOf(Math.max(...desired))){
+                        acc.t += 1
+                    }else{
+                        acc.f += 1
+                    }
+                    if (Data[epoch] === undefined) Data[epoch] = {cost:[],pred:[],true:[],step:[],acc:[]};
+
+                    Data[epoch].cost.push(parseFloat(out.Cost.toFixed(3)))
+                    Data[epoch].pred.push(pred.indexOf(Math.max(...pred)))
+                    Data[epoch].true.push(desired.indexOf(Math.max(...desired)))
+                    Data[epoch].step.push(step)
+                    Data[epoch].acc.push(parseFloat((acc.t/(1000/BATCH_SIZE)).toFixed(3)))
+                }
+                BATCH_Stack.Filters = []
+                BATCH_Stack.FullyConnected = []
+                bar1.increment(BATCH_SIZE,{epoch:epoch,loss:out.Cost.toFixed(3),acc:acc.t*BATCH_SIZE/10})
+            }
+            BATCH_Stack.Filters.push(backword_pass())
+            BATCH_Stack.FullyConnected.push({WeightUpdate:network.WeightUpdates,BiasUpdate:network.BiasUpdates})
         }
-        BATCH_Stack.Filters.push(backword_pass())
-        BATCH_Stack.FullyConnected.push({WeightUpdate:network.WeightUpdates,BiasUpdate:network.BiasUpdates})
+        bar1.stop()
+        console.log(
+            "cost:",cost,
+            "epoch",epoch,
+            "acc:",(acc.t/acc.f).toFixed(3),acc.t/(1000/BATCH_SIZE),acc.f/(1000/BATCH_SIZE)
+        );
+        fs.writeFileSync('logs\\Info.json', JSON.stringify(Data));
+        network.save("Net1")
+        conv.saveFilters("Conv")
+        conv2.saveFilters("Conv2")
+        mxPool1.savePool("Pool")
     }
-    bar1.stop()
-    console.log(
-        "cost:",cost,
-        "epoch",epoch,
-        "acc:",(acc.t/acc.f).toFixed(3),acc.t/(1000/BATCH_SIZE),acc.f/(1000/BATCH_SIZE)
-    );
-    fs.writeFileSync('logs\\Info.json', JSON.stringify(Data));
-    network.save("Net1")
-    conv.saveFilters("Conv")
-    conv2.saveFilters("Conv2")
-    mxPool1.savePool("Pool")
 }

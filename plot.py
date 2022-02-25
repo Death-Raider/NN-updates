@@ -1,14 +1,19 @@
+import numpy as np
+from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 import json
-import numpy as np
-with open("logs\Info.json") as f:
-    data = json.load(f)
-    data = np.array(data,dtype="object")
-cost = []
+
+def MA(vec,sample):
+    cumsum_vec = np.cumsum(np.insert(vec, 0, 0))
+    ma_vec = (cumsum_vec[sample:] - cumsum_vec[:-sample]) / sample
+    return ma_vec
 step = []
 pred = []
 true = []
 acc = []
+cost = []
+with open("logs\Info.json") as f:
+    data = json.load(f)
 for epoch in range(0,1):
     cost.append(np.array(data[epoch]["cost"]))
     step.append(8000*epoch+np.array(data[epoch]["step"]))
@@ -19,14 +24,13 @@ for epoch in range(0,1):
 cost = np.array([*cost],dtype="object").flatten()
 step = np.array([*step],dtype="object").flatten()
 acc = np.array([*acc],dtype="object").flatten()
-cumsum_vec = np.cumsum(np.insert(cost, 0, 0))
-ma_vec = (cumsum_vec[100:] - cumsum_vec[:-100]) / 100
+ma_cost = MA(cost,500)
 
-# plt.plot(step,cost,label="cost")
-plt.plot(step[:len(ma_vec)],ma_vec,label="MA-cost")
+plt.plot(np.arange(len(cost)),cost,label="cost")
+plt.plot(np.arange(len(ma_cost)),ma_cost,label="MA-cost")
+
 plt.plot(step,acc,label="accuracy")
 plt.plot(step[0::997],acc[0::997],label="accuracy-peak")
-# plt.scatter(pred[0][:len(cost)],cost[:])
-plt.legend()
+
 plt.savefig("test")
 plt.show()

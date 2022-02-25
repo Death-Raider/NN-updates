@@ -194,6 +194,8 @@ class NeuralNetwork extends LinearAlgebra{
           }
         }
         this.update(this.WeightUpdates,this.BiasUpdates,learning_rate);
+        this.previousGrads.Weights = this.copyRadar3D(this.WeightUpdates)
+        this.previousGrads.Bias = this.copyRadar2D(this.BiasUpdates)
       }else{cost_val.push(sumCost)}
     }
     this.Loss = {Train_Loss:cost,Validation_Loss:cost_val, params: Parameters};

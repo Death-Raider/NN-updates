@@ -159,6 +159,10 @@ let BATCH_Stack = {
     Filters:[],
     FullyConnected:[]
 }
+let Prev = {
+    W:[],
+    B:[]
+}
 let cost = 0
 function forward_pass(input,desired){
     // get input and draw
@@ -210,7 +214,9 @@ function backword_pass(){
 
     return {grads_y3,grads_y2,grads_y1,grads_x}
 }
+Train()
 function Train(){
+    momentum = 0.9
     for(let epoch = 0; epoch < EPOCH; epoch++){
         acc = {t:0,f:0}
         let bar1 = new cliProgress.SingleBar({
@@ -242,17 +248,16 @@ function Train(){
                     let BiasUpdate =  BATCH_Stack.FullyConnected[0].BiasUpdate
                     let F1 = BATCH_Stack.Filters[0].grads_y1
                     let F2 = BATCH_Stack.Filters[0].grads_y3
-                    for(let i = 1; i< BATCH_SIZE; i++){
+                    for(let i = 1; i < BATCH_SIZE; i++){
                         WeightUpdate = add(WeightUpdate,BATCH_Stack.FullyConnected[i].WeightUpdate)
                         BiasUpdate = add(BiasUpdate,BATCH_Stack.FullyConnected[i].BiasUpdate)
                         F1 = add(F1,BATCH_Stack.Filters[i].grads_y1)
                         F2 = add(F2,BATCH_Stack.Filters[i].grads_y3)
                     }
-                    // console.log( Math.max(...WeightUpdate.flat(Infinity) )  )
-                    // console.log( Math.max(...BiasUpdate.flat(Infinity) )  )
-                    // console.log( Math.max(...F1.flat(Infinity) )  )
-                    // console.log( Math.max(...F2.flat(Infinity) )  )
-                    network.update(WeightUpdate,BiasUpdate,0.01);
+                    WeightUpdate = basefunc(BATCH_Stack.FullyConnected[BATCH_SIZE-1].WeightUpdate,WeightUpdate,(a,b)=>(a*momentum + b*(1-momentum)))
+                    BiasUpdate = basefunc(BATCH_Stack.FullyConnected[BATCH_SIZE-1].BiasUpdate,BiasUpdate,(a,b)=>(a*momentum + b*(1-momentum)))
+
+                    network.update(WeightUpdate,BiasUpdate,0.2);
                     conv2.filterGrads(F2,1e-3)
                     conv2.F = La.normalize(conv2.F,-1,1)
                     conv.filterGrads(F1,1e-3)

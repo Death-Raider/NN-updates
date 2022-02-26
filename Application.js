@@ -3,6 +3,20 @@ const mnist = require('mnist')
 const fs = require('fs')
 const cliProgress = require('cli-progress');
 
+function createMatrix(z,y,x,value){
+    let M = []
+    for(let i = 0; i < z; i++){
+        M[i] = []
+        for(let j = 0; j < y; j++){
+            M[i][j] = []
+            for(let k = 0; k < x; k++){
+                M[i][j][k] = value()
+            }
+        }
+    }
+    return M
+}
+
 let La = new LinearAlgebra;
 let conv = new Convolution;
 let conv2 = new Convolution;

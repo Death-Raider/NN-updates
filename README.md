@@ -182,8 +182,59 @@ Matrix Manipulation
     <li>Weighted Sum(.weightedSum(weight,matrix1,matrix2,matrix3,...))</li>
         Takes the element from Matrix1 and adds to the element of Matrix2 * weight and then the result is added to the element of Matrix3 * weight and repeated for all given matrices.
 </ol>
+#Convolution
+This class can compute the convolution of an 3 dimensional array with a filter of 4 dimensions using the im2row operator, more details can be found <a href="https://cs.nju.edu.cn/wujx/paper/CNN.pdf">here</a>. Aside from convolution, It also provides the Input gradients and updates the filter based on the previous gradients and a learning rate.
 
-Future Updates
+Convolution
+-----------
+<h3>.convolution(input,filters,reshape,acivation)</h3>
+<p>
+    Input is a 3 dimensional input of shape CxHxW <br />
+    Filters is a 4 dimensional input of shape DxCxH'xW' <br />
+    Reshape is bool. If true then it is reshaped into DxH"xW" and the activations function is applied to all elements else the output is of shape H"W"xD and the columns are stacked of the output to get the H"w" <br />
+</p>
+```js
+const {Convolution} = require('./Neural-Network.js')
+const conv = new Convolution
+let input = [[
+    [0,0,1,1,0,0],
+    [0,0,1,1,0,0],
+    [1,1,1,1,1,1],
+    [1,1,1,1,1,1],
+    [0,0,1,1,0,0],
+    [0,0,1,1,0,0]
+]] // shape ->  1x6x6
+let filter = [
+    [[
+        [0,1,0],
+        [0,1,0],
+        [0,1,0]
+    ]],
+    [[
+        [0,0,0],
+        [1,1,1],
+        [0,0,0]
+    ]]
+] // shape -> 2x1x3x3
+output = conv.convolution(input,filter,true,(x)=>x)
+console.log(output)
+// [
+//   [
+//       [ 1, 3, 3, 1 ],
+//       [ 2, 3, 3, 2 ],
+//       [ 2, 3, 3, 2 ],
+//       [ 1, 3, 3, 1 ]
+//   ],
+//   [
+//       [ 1, 2, 2, 1 ],
+//       [ 3, 3, 3, 3 ],
+//       [ 3, 3, 3, 3 ],
+//       [ 1, 2, 2, 1 ]
+//   ]
+// ]
+```
+
+#Future Updates
 --------------
 1) Convolution and other image processing functions    ✔️done
 2) Convolutional Neural Network (CNN)    ✔️ done

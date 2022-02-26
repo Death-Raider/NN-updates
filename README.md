@@ -45,7 +45,8 @@ network.train({
   TotalVal : 1000, //total data for validation (not epochs)
   batch_val : 1, //batch size for validation
   validationFunc : xor, //validation function to get data
-  learning_rate : 0.1 //learning rate (default = 0.0000001)
+  learning_rate : 0.1, //learning rate (default = 0.0000001)
+  momentum : 0.9 // momentum for SGD
 });
 ```
 The `trainFunc` and `validationFunc` recieve an input of the batch iteration and the current epoch which can be used in the functions.
@@ -123,232 +124,68 @@ let network = new NeuralNetwork({
 })()
 ```
 
-# Image Processing
-Some basic image processing and augmentation can help increase the dataset size while training networks and helps in better generalizations.
+# Linear Algebra
+This class is not the most optimized as it can be, but the implementation of certain functions are based on traditional methods to solving them. Those functions will be marked with the * symbol.
 
-Strarting up
-------------
-We require the package to use
+Base function
+--------------
+The base function (basefunc) is a recursive function that takes in 3 parameters a, b, and Opt where a is an array and b is an object and opt is a function. The basefunc goes over all elements of a and also b if b is an array and then passes those elements to the opt function defined by the user. opt will take in 2 parameters and the return can be any object.
 ```js
-const ImageProcessing = require('@death_raider/neural-network').ImageProcessing
-let augmentation = new ImageProcessing()
-```
-
-Creating Matricies
-------------------
- We can create a C x H x W matrix using this function where C is the number of H x W matricies. The matrix will be between -1 and 1
-```js
-let matrix = augmentation.createMatrix(3,3,3);
-console.log("matrix",matrix);
-/*
-matrix [
-  [
-    [ -0.678372439890254, 0.6500779334590403, -0.4565339688601684 ],
-    [ -0.8359020914470849, -0.8694483636477246, 0.16924704621900544 ],
-    [ -0.5988398284917427, -0.4382417489861301, -0.32707306499371747 ]
-  ],
-  [
-    [ -0.8922996259757201, -0.826901601847978, -0.7183706165039161 ],
-    [ 0.7109725262462825, 0.18541035867637534, 0.23335619400348895 ],
-    [ -0.732994280493128, -0.4293017471231919, -0.30308384999392013 ]
-  ],
-  [
-    [ 0.4725701029130227, -0.4855206864171042, 0.2166882512222812 ],
-    [ 0.9341185521019892, 0.8573285355870115, -0.7320992421323922 ],
-    [ -0.043161461538433255, -0.37925479628203806, 0.8177539982172051 ]
-  ]
-]
-*/
-```
-Convolution
------------
-We can convolve an image matrix in 2 ways:
-1) H x W convolution
-
-```js
-let matrix = [[1,1,1],[1,1,1],[1,1,1]]
-let conv = augmentation.Convolution({
-  matrix: matrix, //matrix type H x W
-  filter: [  // filter type  H x W
-    [1,1],
-    [1,1]
-  ],
-  bias: 0, // bias
-  step: {x:1,y:1}, // stride to move the filter
-  padding: 0, // amount to add the input matrix with 0
-  type: "conv", // can be "conv" or "max_pool"
-  activation: "relu" // can be "linear","relu" or "sigmoid"
-})
-console.log("single conv->",conv);
-// single conv-> [ [ 4, 4 ], [ 4, 4 ] ]
-```
-
-2) C x H x W convolution
-
-This is for multi channel convolution with varing feature maps.
-In this example we have a 2 x 3 x 3 input image and we convlve it with a 2 x 2 x 2 filter to get a 2 x 2 x 2 x 2 so each channel of the input
-got convolved with the 2 filters.
-```js
-let matrix = [
-  [[1,1,1],[1,1,1],[1,1,1]], // channel 1
-  [[0,0,0],[1,1,1],[0,0,0]]  // channel 2
-]
-let convMultiChannel = augmentation.convolutionLayers({
-  matrix: matrix, //matrix type C x H x W
-  kernal: [  //kernal type C x H x W
-    [
-      [0,1],
-      [0,0]
-    ],
-    [
-      [0,0],
-      [1,0]
-    ]
-  ],
-  featureMaps: 2, // between 0 and kernal.length
-  stride:{x:1,y:1},
-  padding:0,
-  bias:0,
-  type:"conv",
-  activation: "relu"
-})
-console.log("multi conv",convMultiChannel) //output (channels x convFeature maps x H_new x W_new)
-convMultiChannel.map(e=>console.log(e))
-/*
-multi conv [
-  [ [ [Array], [Array] ], [ [Array], [Array] ] ],
-  [ [ [Array], [Array] ], [ [Array], [Array] ] ]
-]
-[ [ [ 1, 1 ], [ 1, 1 ] ], [ [ 1, 1 ], [ 1, 1 ] ] ]
-[ [ [ 0, 0 ], [ 1, 1 ] ], [ [ 1, 1 ], [ 0, 0 ] ] ]
-*/
-```
-Invert/Flip
------------
-
-This rotates the matrix by 180°
-```js
-let matrix = [
-  [1,2,3,4],
-  [5,6,7,8],
-  [9,10,11,12],
-  [13,14,15,16]
-]
-let flipped = augmentation.Flip(matrix) // matrix type H x W
-console.log("flipped",flipped);
-/*
-flipped [
-  [ 13, 14, 15, 16 ],
-  [ 9, 10, 11, 12 ],
-  [ 5, 6, 7, 8 ],
-  [ 1, 2, 3, 4 ]
-]
-*/
-```
-Normalize
----------
-
-Normalizes over all channels of the input matrix to between max(min(normalized),-1) and 1
-```js
-let matrix = [
-  [[1,2],[3,4]], // channel 1
-  [[0.5,0.5],[0.5,0.5]], // channel 2
-]
-augmentation.Normalize(matrix)  // needs type (C x H x W)
-console.log("normal matrix",matrix);
-
-/*
-normal matrix [
-  [ [ 0.25, 0.5 ], [ 0.75, 1 ] ],
-  [ [ 0.125, 0.125 ], [ 0.125, 0.125 ] ]
-]
-*/
-
-//if the matrix is already normalized it tells
-augmentation.Normalize(matrix)
-console.log("normal matrix",matrix);
-
-/*
-The matrix is already between 0 and 1
-normal matrix [
-  [ [ 0.25, 0.5 ], [ 0.75, 1 ] ],
-  [ [ 0.125, 0.125 ], [ 0.125, 0.125 ] ]
-]
-*/
-
-//if the matrix has -ve values
-matrix = [
-  [[-5,-3],[6,7]] // chanel 1
-]
-augmentation.Normalize(matrix)
-console.log("normal matrix",matrix);
-
-/*
-normal matrix [
-  [
-    [ -0.7142857142857143, -0.42857142857142855 ],
-    [ 0.8571428571428571, 1 ]
-  ]
-]
-*/
-// max(-0.714,-1) = -0.714 so matrix normalized between -0.714 and 1
-```
-Flatten Image
--------------
-
-Flattens a C x H x W into a single dimensional array of size (C * H * W) and returns this flat array with an object which encodes the structure
-```js
-matrix =[
-  [ // channel 1
+linearA = new LinearAlgebra
+let a = [
     [1,2,3,4],
-    [5,6,7,8],
-    [9,10,11,12],
-    [13,14,15,16]
-  ],
-  [ // channel 2
-    [-1,-2,-3,-4],
-    [-5,-6,-7,-8],
-    [-9,-10,-11,-12],
-    [-13,-14,-15,-16]
-  ]
+    [5,6,7,8]
 ]
-
-let flat = augmentation.flattenImage(matrix) // needs type (C x H x W)
-console.log(flat);
-/*
-[
-  [
-      1,   2,   3,   4,   5,  6,  7,   8,   9,
-     10,  11,  12,  13,  14, 15, 16,  -1,  -2,
-     -3,  -4,  -5,  -6,  -7, -8, -9, -10, -11,
-    -12, -13, -14, -15, -16
-  ],
-  { z: 2, y: 4, x: 4 }
+let b = [
+    [8,7,6,5],
+    [4,3,2,1]
 ]
-*/
+function foo(p,q){
+    return p*q
+}
+console.log(linearA.basefunc(a,b,foo))
+// [ [ 8, 14, 18, 20 ], [ 20, 18, 14, 8 ] ]
 ```
-Reconstruct Matrix from Flat Array
-----------------------------------
+Matrix Manipulation
+--------------------
+1)Transpose(.transpose(matrix))__
+It gives the transpose of the matrix (only depth 2).__
+2)Scalar Matrix Product(.scalarMatrixProduct(scalar,matrix))__
+It gives a matrix which has been multiplied a scalar. Matrix can be of any depth.__
+3)Scalar Vector Product(.scalarVectorProduct(scalar,vector))__
+It gives a vector(array) which has been multipied by a scalar.__
+4)Vector Dot Product(.vectorDotProduct(vec1,vec2))__
+It gives the dot product for vectors.__
+5)Matrix vector product(.MatrixvectorProduct(matrix,vector))__
+It gives the product of a matrix and a vector.__
+6)Matrix Product(.matrixProduct(matrix1,matrix2))__
+It gives the product between 2 matrices.__
+7)Kronecker Product(.kroneckerProduct(matrix1,matrix2))__
+It gives the kronecker product of 2 matrices.__
+8)Flip(.flip(matrix))__
+It flips the matrix by 180 degrees.__
+9)Minor*(.minor(matrix,i,j))__
+It calculates the minor of a matrix given the index of an element.__
+10)Determinant*(.determinant(matrix))__
+It calculates the determinant of a matrix using minors.__
+11)Invert Matrix*(.invertMatrix(matrix))__
+It inverts the matrix using the cofactors.__
+12)Vectorize(.vectorize(matrix))__
+Vectorizes the matrix by stacking the columns.__
+13)im2row & im2col*(.im2row(matrix,[shape_x,shape_y]) / .im2col(matrix,[shape_x,shape_y]))__
+Gives the im2row and im2col expansion using a recursive method.__
+14)Reconstruct Matrix(.reconstructMatrix(array,{x:x,y:y,z:z}))__
+It gives the matrix of the specificed dimension from a flat array.__
+15)Normalize(.normalize(matrix,lower_limit,upper_limit))__
+It gives the normalized version of the matrix between the specified limits.__
+16)Weighted Sum(.weightedSum(weight,matrix1,matrix2,matrix3,...))__
+Takes the element from Matrix1 and adds to the element of Matrix2 * weight and then the result is added to the element of Matrix3 * weight and repeated for all given matrices.
 
-Constructs an C x H x W matrix from an array with the provided structure object
-```js
-let flatArr = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16];
-let reconstruct = augmentation.reconstructMatrix(flatArr,{z:4,y:2,x:2})
-console.log(reconstruct);
-/*
-[
-  [ [ 1, 2 ], [ 3, 4 ] ],
-  [ [ 5, 6 ], [ 7, 8 ] ],
-  [ [ 9, 10 ], [ 11, 12 ] ],
-  [ [ 13, 14 ], [ 15, 16 ] ]
-]
-*/
-```
 
 Future Updates
 --------------
 1) Convolution and other image processing functions    ✔️done
-2) Convolutional Neural Network (CNN)    ❌ pending (next)
+2) Convolutional Neural Network (CNN)    ✔️ done
 3) Visulization of Neural Network     ❌ pending (next)
 4) Recurrent Neural Network (RNN)     ❌ pending
 5) Long Short Term Memory (LSTM)    ❌ pending

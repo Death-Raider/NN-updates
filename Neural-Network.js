@@ -5,7 +5,7 @@ class LinearAlgebra {
   scalarMatrixProduct(s,m){return this.basefunc(m,s,(arr,scalar)=>arr*scalar)}; //max any depth
   scalarVectorProduct(s,v){return v1.map(e=>e*s)};//only depth 1
   vectorDotProduct(v1,v2){return v1.map((e,i,a)=>e*v2[i]).reduce((a,b)=>a+b)}; //only both depth 1
-  vectorMatrixProduct(v,m){return v.map((e,i)=>this.scalarMatrixProduct(e,this.transpose(m)[i])).reduce((a,b)=>a.map( (x, i)=> x + b[i] ))}; //only depth 1 and 2
+  MatrixvectorProduct(m,v){return v.map((e,i)=>this.scalarMatrixProduct(e,this.transpose(m)[i])).reduce((a,b)=>a.map( (x, i)=> x + b[i] ))}; //only depth 2 and 1
   matrixProduct(m1,m2){return m1.map(row => m2[0].map((_,i)=>this.vectorDotProduct( row, m2.map(e=>e[i]) )) )}
   kroneckerProduct(a,b,r=[],t=[]) {return a.map(a=>b.map(b=>a.map(y=>b.map(x=>r.push(y*x)),t.push(r=[]))))&&t}
   flip(matrix){
@@ -46,7 +46,8 @@ class LinearAlgebra {
   normalize(m,a=-1,b=1){
       let min_max = {min:Math.min(...m.flat(Infinity)),max:Math.max(...m.flat(Infinity))}
       if(min_max.max === min_max.min){
-          return m
+          if(min_max.max == 0) return m
+          return this.basefunc(m,min_max.max,(x,y)=>x/y)
       }
       return this.basefunc(m,min_max,(x,y)=>(b-a)*(x-y.min)/(y.max-y.min)+a)
   } ;// any depth of matrix

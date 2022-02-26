@@ -360,10 +360,11 @@ mxpool.savePool("path")
 
 #Application of CNN
 --------------------
-In the Application.js file, I have created a simple CNN for mnist number recognition but there are more modules needed to install first
+In the Application.js file, I have created a simple CNN for mnist number recognition but there are more modules needed to install first. After training finishes then u can start running plot.py to see how the loss and accuracy changed
 
 ```cmd
 npm install mnist cli-progress
+pip install numpy matplotlib
 ```
 
 #Future Updates

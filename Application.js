@@ -62,6 +62,7 @@ let Prev = {
     W:[],
     B:[]
 }
+Train()
 function forward_pass(input,desired){
     let y1 = conv.convolution(input,f,true)
     if(y1.flat(Infinity).filter(e=>e===0).length != y1.flat(Infinity).length)

@@ -188,11 +188,10 @@ This class can compute the convolution of an 3 dimensional array with a filter o
 Convolution
 -----------
 <h3>.convolution(input,filters,reshape,acivation)</h3>
-<p>
     Input is a 3 dimensional input of shape CxHxW <br />
     Filters is a 4 dimensional input of shape DxCxH'xW' <br />
     Reshape is bool. If true then it is reshaped into DxH"xW" and the activations function is applied to all elements else the output is of shape H"W"xD and the columns are stacked of the output to get the H"w" <br />
-</p>
+    
 ```js
 const {Convolution} = require('./Neural-Network.js')
 const conv = new Convolution

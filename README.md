@@ -289,11 +289,13 @@ console.log(next_layer_grads)
 ```
 <h3>.filterGrads(PreviousGradients, learning_rate)</h3>
 PreviousGradients are of the same shape as needed in layer gradient.
+
 ```js
 conv.filterGrads(fake_grads,0.1)
 ```
 <h3>.saveFilters(folder)</h3>
 Saves the filters in text format in Filters.txt in the specified folder
+
 ```js
 conv,saveFilters("path")
 ```

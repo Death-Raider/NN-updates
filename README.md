@@ -288,7 +288,7 @@ console.log(next_layer_grads)
 // ]
 ```
 <h3>.filterGrads(PreviousGradients, learning_rate)</h3>
-PreviousGradients are of the same shape as needed in layer gradient.
+PreviousGradients are of the same shape as needed in layer gradient. It updates the filters so nothing else is needed
 
 ```js
 conv.filterGrads(fake_grads,0.1)

@@ -187,13 +187,13 @@ This class can compute the convolution of an 3 dimensional array with a filter o
 
 Convolution
 -----------
-<h3>.convolution(input,filters,reshape,acivation)</h3>
-    Input is a 3 dimensional input of shape CxHxW <br />
-    Filters is a 4 dimensional input of shape DxCxH'xW' <br />
-    Reshape is bool. If true then it is reshaped into DxH"xW" and the activations function is applied to all elements else the output is of shape H"W"xD and the columns are stacked of the output to get the H"w" <br />
-    
+<h3>.convolution(input, filters, reshape, activation)</h3>
+Input is a 3 dimensional input of shape CxHxW <br />
+Filters is a 4 dimensional input of shape DxCxH'xW' <br />
+Reshape is bool. If true then it is reshaped into DxH"xW" and the activations function is applied to all elements else the output is of shape H"W"xD and the columns are stacked of the output to get the H"W" <br />
+
 ```js
-const {Convolution} = require('./Neural-Network.js')
+const {Convolution, LinearAlgebra} = require('./Neural-Network.js')
 const conv = new Convolution
 let input = [[
     [0,0,1,1,0,0],
@@ -229,6 +229,61 @@ console.log(output)
 //       [ 3, 3, 3, 3 ],
 //       [ 3, 3, 3, 3 ],
 //       [ 1, 2, 2, 1 ]
+//   ]
+// ]
+```
+<h3>.layerGrads(PreviousGradients)</h3>
+PreviousGradients has shape H"W"xD which is same has shape of output if reshape is false in the above convolution.<br />
+Returns a matrix of shape CxHxW <br />
+
+```js
+let fake_grads = [
+    [0,0],[1,0],[0,1],[1,1],[0,0],[1,0],[0,1],[1,0],
+    [0,0],[1,1],[0,1],[1,0],[0,1],[1,0],[0,1],[1,0]
+]
+let next_layer_grads = conv.layerGrads(fake_grads)
+console.log(next_layer_grads)
+// [
+//   [
+//     [ 0, 0, 0, 0, 0, 0 ],
+//     [ 0, 1, 1, 2, 2, 1 ],
+//     [ 0, 1, 2, 2, 2, 0 ],
+//     [ 1, 4, 5, 5, 4, 1 ],
+//     [ 1, 2, 2, 1, 1, 0 ],
+//     [ 0, 1, 1, 1, 1, 0 ]
+//   ]
+// ]
+```
+If u have PreviousGradients of shape DxH"xW" then you can do this to convert into that format using the LinearAlgebra class
+```js
+let fake_grads = [
+    [
+        [0,1,1,0],
+        [0,1,1,0],
+        [0,1,1,0],
+        [0,1,1,0]
+    ],
+    [
+        [0,0,0,0],
+        [1,1,1,1],
+        [1,1,1,1],
+        [0,0,0,0]
+    ]
+]
+const La = new LinearAlgebra
+fake_grads = La.vectorize(fake_grads)
+fake_grads = La.reconstructMatrix(fake_grads,{x:4*4,y:2,z:1}).flat(1)
+fake_grads = La.transpose(fake_grads)
+let next_layer_grads = conv.layerGrads(fake_grads)
+console.log(next_layer_grads)
+// [
+//   [
+//     [ 0, 0, 1, 1, 0, 0 ],
+//     [ 0, 0, 2, 2, 0, 0 ],
+//     [ 1, 2, 6, 6, 2, 1 ],
+//     [ 1, 2, 6, 6, 2, 1 ],
+//     [ 0, 0, 2, 2, 0, 0 ],
+//     [ 0, 0, 1, 1, 0, 0 ]
 //   ]
 // ]
 ```

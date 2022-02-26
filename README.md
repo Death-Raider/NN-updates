@@ -299,12 +299,69 @@ Saves the filters in text format in Filters.txt in the specified folder
 ```js
 conv,saveFilters("path")
 ```
+# Max Pool
+Does a max pool on a matrix using the im2row method.<br />
+<h3>.pool(inout, size, stride, reshape)</h3>
+Input is of shape CxHxW, size and stride are both integers, and reshape is bool.<br />
+if reshape is true then output is a matrix, otherwise output will be the vectorized matrix.
+
+```js
+const {MaxPool} = require('./Neural-Network.js')
+const mxpool = new MaxPool
+let input = [[
+    [0,0,1,1,0,0],
+    [0,0,1,1,0,0],
+    [1,1,1,1,1,1],
+    [1,1,1,1,1,1],
+    [0,0,1,1,0,0],
+    [0,0,1,1,0,0]
+]] // shape ->  1x6x6
+
+let output = mxpool.pool(input)//other arguments default to 2,2,and true
+console.log(output)
+// [
+//     [
+//         [ 0, 1, 0 ],
+//         [ 1, 1, 1 ],
+//         [ 0, 1, 0 ]
+//     ]
+// ]
+```
+<h3>.layerGrads(PreviousGradients)</h3>
+PreviousGradients are of the same shape as needed in the convolution class. The output of the function is the layer gradient of the same format.
+
+```js
+let fake_grads = [
+    [ 0 ], [ 1 ],
+    [ 0 ], [ 1 ],
+    [ 5 ], [ 1 ],
+    [ 0 ], [ 1 ],
+    [ 0 ]
+]
+let input_grads = mxpool.layerGrads(fake_grads)
+console.log(input_grads);
+// [
+//   [ 0 ], [ 0 ], [ 1 ], [ 0 ], [ 0 ],
+//   [ 0 ], [ 0 ], [ 0 ], [ 0 ], [ 0 ],
+//   [ 0 ], [ 0 ], [ 1 ], [ 0 ], [ 5 ],
+//   [ 0 ], [ 1 ], [ 0 ], [ 0 ], [ 0 ],
+//   [ 0 ], [ 0 ], [ 0 ], [ 0 ], [ 0 ],
+//   [ 0 ], [ 1 ], [ 0 ], [ 0 ], [ 0 ],
+//   [ 0 ], [ 0 ], [ 0 ], [ 0 ], [ 0 ],
+//   [ 0 ]
+// ]
+```
+<h3>.savePool(foler)</h3>
+Like the .saveFilters function, this function also saves the pooling details needed for the layerGrads function but its not nessesary to save these details and it wont have an effect on the learning of the network but is there just to see how the pooling is being done
+
+```js
+mxpool.savePool("path")
+```
 
 #Future Updates
 --------------
 1) Convolution and other image processing functions    ✔️done
 2) Convolutional Neural Network (CNN)    ✔️ done
-3) Visulization of Neural Network     ❌ pending (next)
+3) Visualization of Neural Network     ❌ pending (next)
 4) Recurrent Neural Network (RNN)     ❌ pending
 5) Long Short Term Memory (LSTM)    ❌ pending
-6) Proper documentation    ❌ pending

@@ -148,39 +148,40 @@ console.log(linearA.basefunc(a,b,foo))
 ```
 Matrix Manipulation
 --------------------
-1)Transpose(.transpose(matrix))<br />
-It gives the transpose of the matrix (only depth 2).<br />
-2)Scalar Matrix Product(.scalarMatrixProduct(scalar,matrix))<br />
-It gives a matrix which has been multiplied a scalar. Matrix can be of any depth.<br />
-3)Scalar Vector Product(.scalarVectorProduct(scalar,vector))<br />
-It gives a vector(array) which has been multipied by a scalar.<br />
-4)Vector Dot Product(.vectorDotProduct(vec1,vec2))<br />
-It gives the dot product for vectors.<br />
-5)Matrix vector product(.MatrixvectorProduct(matrix,vector))<br />
-It gives the product of a matrix and a vector.<br />
-6)Matrix Product(.matrixProduct(matrix1,matrix2))<br />
-It gives the product between 2 matrices.<br />
-7)Kronecker Product(.kroneckerProduct(matrix1,matrix2))<br />
-It gives the kronecker product of 2 matrices.<br />
-8)Flip(.flip(matrix))<br />
-It flips the matrix by 180 degrees.<br />
-9)Minor*(.minor(matrix,i,j))<br />
-It calculates the minor of a matrix given the index of an element.<br />
-10)Determinant*(.determinant(matrix))<br />
-It calculates the determinant of a matrix using minors.<br />
-11)Invert Matrix*(.invertMatrix(matrix))<br />
-It inverts the matrix using the cofactors.<br />
-12)Vectorize(.vectorize(matrix))<br />
-Vectorizes the matrix by stacking the columns.<br />
-13)im2row & im2col*(.im2row(matrix,[shape_x,shape_y]) / .im2col(matrix,[shape_x,shape_y]))<br />
-Gives the im2row and im2col expansion using a recursive method.<br />
-14)Reconstruct Matrix(.reconstructMatrix(array,{x:x,y:y,z:z}))<br />
-It gives the matrix of the specificed dimension from a flat array.<br />
-15)Normalize(.normalize(matrix,lower_limit,upper_limit))<br />
-It gives the normalized version of the matrix between the specified limits.<br />
-16)Weighted Sum(.weightedSum(weight,matrix1,matrix2,matrix3,...))<br />
-Takes the element from Matrix1 and adds to the element of Matrix2 * weight and then the result is added to the element of Matrix3 * weight and repeated for all given matrices.
-
+<ol>
+    <li>Transpose(.transpose(matrix))</li><br />
+    It gives the transpose of the matrix (only depth 2).<br />
+    <li>Scalar Matrix Product(.scalarMatrixProduct(scalar,matrix))</li><br />
+    It gives a matrix which has been multiplied a scalar. Matrix can be of any depth.<br />
+    <li>Scalar Vector Product(.scalarVectorProduct(scalar,vector))</li><br />
+    It gives a vector(array) which has been multipied by a scalar.<br />
+    4)Vector Dot Product(.vectorDotProduct(vec1,vec2))<br />
+    It gives the dot product for vectors.<br />
+    5)Matrix vector product(.MatrixvectorProduct(matrix,vector))<br />
+    It gives the product of a matrix and a vector.<br />
+    6)Matrix Product(.matrixProduct(matrix1,matrix2))<br />
+    It gives the product between 2 matrices.<br />
+    7)Kronecker Product(.kroneckerProduct(matrix1,matrix2))<br />
+    It gives the kronecker product of 2 matrices.<br />
+    8)Flip(.flip(matrix))<br />
+    It flips the matrix by 180 degrees.<br />
+    9)Minor*(.minor(matrix,i,j))<br />
+    It calculates the minor of a matrix given the index of an element.<br />
+    10)Determinant*(.determinant(matrix))<br />
+    It calculates the determinant of a matrix using minors.<br />
+    11)Invert Matrix*(.invertMatrix(matrix))<br />
+    It inverts the matrix using the cofactors.<br />
+    12)Vectorize(.vectorize(matrix))<br />
+    Vectorizes the matrix by stacking the columns.<br />
+    13)im2row & im2col*(.im2row(matrix,[shape_x,shape_y]) / .im2col(matrix,[shape_x,shape_y]))<br />
+    Gives the im2row and im2col expansion using a recursive method.<br />
+    14)Reconstruct Matrix(.reconstructMatrix(array,{x:x,y:y,z:z}))<br />
+    It gives the matrix of the specificed dimension from a flat array.<br />
+    15)Normalize(.normalize(matrix,lower_limit,upper_limit))<br />
+    It gives the normalized version of the matrix between the specified limits.<br />
+    16)Weighted Sum(.weightedSum(weight,matrix1,matrix2,matrix3,...))<br />
+    Takes the element from Matrix1 and adds to the element of Matrix2 * weight and then the result is added to the element of Matrix3 * weight and repeated for all given matrices.
+</ul>
 
 Future Updates
 --------------

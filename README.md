@@ -149,12 +149,12 @@ console.log(linearA.basefunc(a,b,foo))
 Matrix Manipulation
 --------------------
 <ol>
-    <li>Transpose(.transpose(matrix))</li><br />
-    It gives the transpose of the matrix (only depth 2).<br />
-    <li>Scalar Matrix Product(.scalarMatrixProduct(scalar,matrix))</li><br />
-    It gives a matrix which has been multiplied a scalar. Matrix can be of any depth.<br />
-    <li>Scalar Vector Product(.scalarVectorProduct(scalar,vector))</li><br />
-    It gives a vector(array) which has been multipied by a scalar.<br />
+    <li>Transpose(.transpose(matrix))</li>
+    It gives the transpose of the matrix (only depth 2).<br /><br />
+    <li>Scalar Matrix Product(.scalarMatrixProduct(scalar,matrix))</li>
+    It gives a matrix which has been multiplied a scalar. Matrix can be of any depth.<br /><br />
+    <li>Scalar Vector Product(.scalarVectorProduct(scalar,vector))</li>
+    It gives a vector(array) which has been multipied by a scalar.<br /><br />
     4)Vector Dot Product(.vectorDotProduct(vec1,vec2))<br />
     It gives the dot product for vectors.<br />
     5)Matrix vector product(.MatrixvectorProduct(matrix,vector))<br />

@@ -139,16 +139,16 @@ function Train(){
                     let F1 = BATCH_Stack.Filters[0].grads_y1
                     let F2 = BATCH_Stack.Filters[0].grads_y3
                     for(let i = 1; i < BATCH_SIZE; i++){// adding the other weights of the batch together
-                        WeightUpdate = add(WeightUpdate,BATCH_Stack.FullyConnected[i].WeightUpdate)
-                        BiasUpdate = add(BiasUpdate,BATCH_Stack.FullyConnected[i].BiasUpdate)
-                        F1 = add(F1,BATCH_Stack.Filters[i].grads_y1)
-                        F2 = add(F2,BATCH_Stack.Filters[i].grads_y3)
+                        WeightUpdate = La.basefunc(WeightUpdate,BATCH_Stack.FullyConnected[i].WeightUpdate,(x,y)=>x+y)
+                        BiasUpdate = La.basefunc(BiasUpdate,BATCH_Stack.FullyConnected[i].BiasUpdate,(x,y)=>x+y)
+                        F1 = La.basefunc(F1,BATCH_Stack.Filters[i].grads_y1,(x,y)=>x+y)
+                        F2 = La.basefunc(F2,BATCH_Stack.Filters[i].grads_y3,(x,y)=>x+y)
                     }
                     //Applying momentum
-                    WeightUpdate = basefunc(BATCH_Stack.FullyConnected[BATCH_SIZE-1].WeightUpdate,WeightUpdate,(a,b)=>(a*momentum + b*(1-momentum)))
-                    BiasUpdate = basefunc(BATCH_Stack.FullyConnected[BATCH_SIZE-1].BiasUpdate,BiasUpdate,(a,b)=>(a*momentum + b*(1-momentum)))
-                    F1 = basefunc(BATCH_Stack.Filters[BATCH_SIZE-1].grads_y1,F1,(a,b)=>(a*momentum + b*(1-momentum)))
-                    F2 = basefunc(BATCH_Stack.Filters[BATCH_SIZE-1].grads_y3,F2,(a,b)=>(a*momentum + b*(1-momentum)))
+                    WeightUpdate = La.basefunc(BATCH_Stack.FullyConnected[BATCH_SIZE-1].WeightUpdate,WeightUpdate,(a,b)=>(a*momentum + b*(1-momentum)))
+                    BiasUpdate = La.basefunc(BATCH_Stack.FullyConnected[BATCH_SIZE-1].BiasUpdate,BiasUpdate,(a,b)=>(a*momentum + b*(1-momentum)))
+                    F1 = La.basefunc(BATCH_Stack.Filters[BATCH_SIZE-1].grads_y1,F1,(a,b)=>(a*momentum + b*(1-momentum)))
+                    F2 = La.basefunc(BATCH_Stack.Filters[BATCH_SIZE-1].grads_y3,F2,(a,b)=>(a*momentum + b*(1-momentum)))
                     //updating
                     network.update(WeightUpdate,BiasUpdate,0.1);
                     conv2.filterGrads(F2,1e-4)

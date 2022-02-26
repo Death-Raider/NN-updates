@@ -11,7 +11,7 @@ This is an easy to use Neural Network package with SGD using backpropagation as 
 Creating the model
 ------------------
 ```js
-const NeuralNetwork = require('@death_raider/neural-network').NeuralNetwork
+const NeuralNetwork = require('./Neural-Network.js').NeuralNetwork
 //creates ANN with 2 input nodes, 1 hidden layers with 2 hidden nodes and 1 output node
 let network = new NeuralNetwork({
   input_nodes : 2,
@@ -106,7 +106,7 @@ network.save(path)
 ```
 Loading the model requires a bit more work as it is asynchronous:
 ```js
-const NeuralNetwork = require('./Neural Network/Neural-Network.js')
+const NeuralNetwork = require('./Neural-Network.js')
 let network = new NeuralNetwork({
   input_nodes : 2,
   layer_count : [2],
@@ -352,10 +352,18 @@ console.log(input_grads);
 // ]
 ```
 <h3>.savePool(foler)</h3>
-Like the .saveFilters function, this function also saves the pooling details needed for the layerGrads function but its not nessesary to save these details and it wont have an effect on the learning of the network but is there just to see how the pooling is being done
+Like the .saveFilters function, this function also saves the pooling details needed for the layerGrads function but its not necessary to save these details and it wont have an effect on the learning of the network but is there just to see how the pooling is being done
 
 ```js
 mxpool.savePool("path")
+```
+
+#Application of CNN
+--------------------
+In the Application.js file, I have created a simple CNN for mnist number recognition but there are more modules needed to install first
+
+```cmd
+npm install mnist cli-progress
 ```
 
 #Future Updates

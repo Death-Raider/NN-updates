@@ -166,7 +166,7 @@ class NeuralNetwork extends LinearAlgebra{
       }
     }
   }
-  train({TotalTrain=0,trainFunc=()=>{},TotalVal=0,validationFunc=()=>{},learning_rate=0.0005,batch_train=1,batch_val=1,momentum=1}={}){
+  train({TotalTrain=0,trainFunc=()=>{},TotalVal=0,validationFunc=()=>{},learning_rate=0.0005,batch_train=1,batch_val=1,momentum=0}={}){
     let cost=[], cost_val=[], changing = [];
     let Parameters = {W:[],B:[]}
     for(let i = 0; i < Math.floor((TotalTrain/batch_train+TotalVal/batch_val)); i++){

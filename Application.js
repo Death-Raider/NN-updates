@@ -33,7 +33,7 @@ let f2 = []
 for(let i= 0; i<filter_count_2; i++) f2.push(createMatrix(filter_count_1,5,5,()=>Math.random()))
 
 let BATCH_SIZE = 1
-let EPOCH = 5
+let EPOCH = 1
 
 //initilizing network
 let network = new NeuralNetwork({
@@ -51,7 +51,11 @@ let Data = [
         pred:[],
         true:[],
         step:[],
-        acc:[]
+        acc:[],
+        F1: [],
+        F2: [],
+        W: [],
+        B: []
     }
 ]
 let BATCH_Stack = {
@@ -163,7 +167,7 @@ function Train(){
                         acc.f += 1
                     }
                     //redefining data for new epoch
-                    if (Data[epoch] === undefined) Data[epoch] = {cost:[],pred:[],true:[],step:[],acc:[]};
+                    if (Data[epoch] === undefined) Data[epoch] = {cost:[],pred:[],true:[],step:[],acc:[],F1: [],F2: [],W: [],B: []};
                     //updating Data
                     Data[epoch].cost.push(parseFloat(out.Cost.toFixed(3)))
                     Data[epoch].pred.push(pred.indexOf(Math.max(...pred)))
@@ -189,6 +193,10 @@ function Train(){
             "epoch",epoch,
             "acc:",acc.t*BATCH_SIZE/10,"%",acc.f*BATCH_SIZE/10,"%"
         );
+        Data[epoch].F1 = conv.F
+        Data[epoch].F2 = conv2.F
+        Data[epoch].W = network.Weights
+        Data[epoch].B = network.Bias
         //Write in logs
         fs.writeFileSync('logs\\Info.json', JSON.stringify(Data));
         //Save network

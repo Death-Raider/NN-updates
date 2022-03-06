@@ -62,10 +62,6 @@ let BATCH_Stack = {
     Filters:[],
     FullyConnected:[]
 }
-let Prev = {
-    W:[],
-    B:[]
-}
 Train()
 function forward_pass(input,desired){
     let y1 = conv.convolution(input,f,true)

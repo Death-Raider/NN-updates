@@ -1,6 +1,8 @@
 // const { createCanvas } = require('canvas')
 const {NeuralNetwork, LinearAlgebra,  Convolution, MaxPool} = require("./Neural-Network.js")
 const fs = require('fs')
+const cliProgress = require('cli-progress');
+
 
 function make_circle(size){
     let radius = Math.floor(Math.random()*size/2)
@@ -92,94 +94,221 @@ const conv = new Convolution
 const conv2 = new Convolution
 const mxPool1 = new MaxPool
 
-let trained = JSON.parse(fs.readFileSync("logs/Info.json"))[0]
-
-let F1 = trained.F1
-let F2 = trained.F2
-let FC = [trained.W,trained.B]
-conv.x_shape = [28,28,1]
-conv.y_shape = [24,24,4]
-conv.f_shape = [5,5,1,4]
-conv2.x_shape = [12,12,4]
-conv2.y_shape = [8,8,10]
-conv2.f_shape = [5,5,4,10]
-
-
 network.Activation.hidden = [(x)=>1/(1+Math.exp(-x)),(x)=>x*(1-x)]
 
 let P1 = createParameters(8*8*10,[100],10,-1,1)
 let P2 = createParameters(8*8*10,[100],10,-1,1)
+
 let F1_new1 = []
 let F1_new2 = []
+let f1 = []
 let filter_count_1 = 4
 for(let i = 0; i<filter_count_1; i++){
     F1_new1.push(createMatrix(1,5,5,()=>Math.random()))
-    F1_new2.push(createMatrix(1,5,5,()=>Math.random()))
+    F1_new1.push(createMatrix(1,5,5,()=>Math.random()))
+    f1.push(createMatrix(1,5,5,()=>Math.random()))
 }
 let filter_count_2 = 10
 let F2_new1 = []
 let F2_new2 = []
+let f2 = []
 for(let i= 0; i<filter_count_2; i++){
     F2_new1.push(createMatrix(filter_count_1,5,5,()=>Math.random()))
-    F2_new2.push(createMatrix(filter_count_1,5,5,()=>Math.random()))
+    F2_new1.push(createMatrix(filter_count_1,5,5,()=>Math.random()))
+    f2.push(createMatrix(filter_count_1,5,5,()=>Math.random()))
 }
 
-let set = mnist.set(1,0)
+let set = mnist.set(8000,0)
 let inp = La.normalize(set.training[0].input,-1,1)
 inp = La.reconstructMatrix(inp,{x:28,y:28,z:1})
 let out = set.training[0].output
 
 const param = (P1,P2,P3,alpha,beta) =>{
-    let added = La.basefunc(P2,P3,(x,y)=>(alpha*x+beta*y))
-    return La.basefunc(P1,added,(x,y)=>(x+y))
+    let added1 = La.basefunc(P2,P3,(x,y)=>(alpha*x+beta*y))
+    return La.basefunc(P1,added1,(x,y)=>(x+y))
 }
+
+Train()
 
 function forward_pass(input,desired,All_Parameters){
 
-    conv.F = All_Parameters[0]
-    conv2.F = All_Parameters[1]
     network.Weights = All_Parameters[2][0]
     network.Bias = All_Parameters[2][1]
 
-    let y1 = conv.convolution(input)
+    let y1 = conv.convolution(input,All_Parameters[0])
+    // console.log(Math.max(...input.flat(Infinity)));
+    console.log(conv.F);
+
     if(y1.flat(Infinity).filter(e=>e===0).length != y1.flat(Infinity).length)
         y1 = La.normalize(y1,-1,1)
     //Max Pool
     let y2 = mxPool1.pool(y1)
     //conv2
-    let y3 = conv2.convolution(y2)
+    let y3 = conv2.convolution(y2,All_Parameters[1])
     if(y3.flat(Infinity).filter(e=>e===0).length != y3.flat(Infinity).length)
         y3 = La.normalize(y3,0,1)
     //feed to network and get cost
-
     let out = network.trainIteration({
         input:La.vectorize(y3),
         desired:desired,
     });
-
-    return out
+    let pred = out.Layers[out.Layers.length-1]
+    return [y1,y2,y3,out,pred]
 }
+function backword_pass(){
+    //getting gradients from network and reshape into proper format
+    let grads_y3 = network.getInputGradients()
+    grads_y3 = La.reconstructMatrix(grads_y3,{x:8*8,y:filter_count_2,z:1}).flat(1)
+    grads_y3 = La.transpose(grads_y3)
+    //sending grads for conv
+    let grads_y2 = conv2.layerGrads(grads_y3)
+    grads_y2 = La.vectorize(grads_y2)
+    grads_y2 = La.reconstructMatrix(grads_y2,{x:12*12,y:filter_count_1,z:1}).flat(1)
+    grads_y2 = La.transpose(grads_y2)
+    //sending grads to pool
+    let grads_y1 = mxPool1.layerGrads(grads_y2)
+    //sendin grads to conv
+    let grads_x = conv.layerGrads(grads_y1)
+    //no point in sending grads to input layer but still doing it
+    grads_x = La.vectorize(grads_x)
+    grads_x = La.reconstructMatrix(grads_x,{x:28*28,y:1,z:1}).flat(1)
+    grads_x = La.transpose(grads_x)
 
-let Total = 200
-let Data = {alpha:[],cost:[],beta:[]}
-for(let i = 0; i < Total; i++){
-    let alpha = 20*i/Total - 20/2
-    let result
-    Data.beta.push([])
-    Data.cost.push([])
-    for(let j = 0; j < Total; j++){
-        let beta = 20*j/Total - 20/2
-
-        let All_Parameters = param([F1,F2,FC],[F1_new1,F2_new1,P1],[F1_new2,F2_new2,P2],alpha,beta)
-
-        result = forward_pass(inp,out,All_Parameters)
-        Data.cost[i].push(result.Cost)
-        Data.beta[i].push(beta)
+    return {grads_y3,grads_y2,grads_y1,grads_x}
+}
+function Train(){
+    let momentum = 0.9
+    let BATCH_SIZE = 1
+    let EPOCH = 1
+    let BATCH_Stack = {
+        Filters:[],
+        FullyConnected:[]
     }
-    console.log(i,result.Cost)
-    Data.alpha.push(alpha)
+    let Total = 10
+    let Data = [{alpha:[],cost:[],beta:[]}]
+    let acc = {t:0,f:0}
+    for(let epoch = 0; epoch < EPOCH; epoch++){
+        //setting up the the progress bar
+        let bar1 = new cliProgress.SingleBar({
+            format: 'Epoch:{epoch} [{bar}] {percentage}% | ETA: {eta}s | {value}/{total} | Acc: {acc}% | Loss: {loss}'
+        }, cliProgress.Presets.shades_classic);
+        bar1.start(set.training.length, 0,{
+            epoch:epoch,
+            acc:acc.t*BATCH_SIZE/10,
+            loss:0
+        })
+        acc = {t:0,f:0} // reset accuracy every epoch
+        let cost = 0
+        for(let i = -Total; i < Total; i++){
+            Data[epoch].alpha.push((i/Total)*5)
+            Data[epoch].beta.push((i/Total)*5)
+        }
+        for(let step = 0; step < set.training.length; step++){
+
+            let x = La.normalize(set.training[step].input,-1,1)
+            x = La.reconstructMatrix(x,{x:28,y:28,z:1})
+            let desired = set.training[step].output
+            let params = [network.copyRadar2D(f1),network.copyRadar2D(f2),[network.copyRadar3D(network.Weights),network.copyRadar2D(network.Bias)]]
+            let [y1,y2,y3,out, pred] = forward_pass(x,desired,params)
+            cost = out.Cost.toFixed(3)
+
+            if(step%1000 == 0){
+                // every 1000 steps reset accuracy and fill logs
+                acc = {t:0,f:0}
+            }
+            if(step%1000 == 0){
+                network.save("Net1")
+                conv.saveFilters("Conv")
+                conv2.saveFilters("Conv2")
+                mxPool1.savePool("Pool")
+            }
+
+            if(step%BATCH_SIZE == 0){
+                if(step != 0){// every bacth if step is not 0
+                    //getting initial changes
+                    console.log(BATCH_Stack.Filters[0].grads_y1);
+                    let WeightUpdate =  BATCH_Stack.FullyConnected[0].WeightUpdate
+                    let BiasUpdate =  BATCH_Stack.FullyConnected[0].BiasUpdate
+                    let F1 = BATCH_Stack.Filters[0].grads_y1
+                    let F2 = BATCH_Stack.Filters[0].grads_y3
+                    for(let i = 1; i < BATCH_SIZE; i++){// adding the other weights of the batch together
+                        WeightUpdate = La.basefunc(WeightUpdate,BATCH_Stack.FullyConnected[i].WeightUpdate,(x,y)=>x+y)
+                        BiasUpdate = La.basefunc(BiasUpdate,BATCH_Stack.FullyConnected[i].BiasUpdate,(x,y)=>x+y)
+                        F1 = La.basefunc(F1,BATCH_Stack.Filters[i].grads_y1,(x,y)=>x+y)
+                        F2 = La.basefunc(F2,BATCH_Stack.Filters[i].grads_y3,(x,y)=>x+y)
+                    }
+                    //Applying momentum
+                    WeightUpdate = La.basefunc(BATCH_Stack.FullyConnected[BATCH_SIZE-1].WeightUpdate,WeightUpdate,(a,b)=>(a*momentum + b*(1-momentum)))
+                    BiasUpdate = La.basefunc(BATCH_Stack.FullyConnected[BATCH_SIZE-1].BiasUpdate,BiasUpdate,(a,b)=>(a*momentum + b*(1-momentum)))
+                    F1 = La.basefunc(BATCH_Stack.Filters[BATCH_SIZE-1].grads_y1,F1,(a,b)=>(a*momentum + b*(1-momentum)))
+                    F2 = La.basefunc(BATCH_Stack.Filters[BATCH_SIZE-1].grads_y3,F2,(a,b)=>(a*momentum + b*(1-momentum)))
+                    //updating
+                    network.update(WeightUpdate,BiasUpdate,0.01);
+                    conv2.filterGrads(F2,1e-4)
+                    conv2.F = La.normalize(conv2.F,-1,1)
+                    
+                    conv.filterGrads(F1,1e-3)
+                    conv.F = La.normalize(conv.F,-1,1)
+                    //update Accuracy
+                    if(pred.indexOf(Math.max(...pred))==desired.indexOf(Math.max(...desired))){
+                        acc.t += 1
+                    }else{
+                        acc.f += 1
+                    }
+                    //redefining data for new epoch
+                    if(step%100 == 0){
+                        // network.Weights[0][0][0] = 99
+                        // if (Data[epoch] === undefined)Data[epoch] = {cost:[],alpha:[],beta:[]};
+                        // //updating Data
+                        // Data[epoch].cost.push([])
+                        // for(let a of Data[epoch].alpha){
+                        //     for(let b of Data[epoch].beta){
+                        //         [a,b] = [parseFloat(a),parseFloat(b)]
+                        //         let All_Parameters = param([conv.F,conv2.F,[network.Weights,network.Bias]],[F1_new1,F2_new1,P1],[F1_new2,F2_new2,P2],a,b)
+                        //         let [_1,_2,_3,result,_4] = forward_pass(inp,desired,All_Parameters)
+                        //         Data[epoch].cost[Data[epoch].cost.length-1].push(result.Cost)
+                        //     }
+                        // }
+                        // fs.writeFileSync('logs\\Info2.json', JSON.stringify(Data));
+                    }
+
+                    conv.F = params[0]
+                    conv2.F = params[1]
+                    network.Weights = params[2][0]
+                    network.Bias = params[2][1]
+                }
+                //Reinitilizing Batch
+                BATCH_Stack.Filters = []
+                BATCH_Stack.FullyConnected = []
+                //move pregress bar by batch size and show the following
+                bar1.increment(BATCH_SIZE,{epoch:epoch,loss:out.Cost.toFixed(3),acc:acc.t*BATCH_SIZE/10})
+            }
+            //update batch
+            BATCH_Stack.Filters.push(backword_pass())
+            BATCH_Stack.FullyConnected.push({WeightUpdate:network.WeightUpdates,BiasUpdate:network.BiasUpdates})
+        }
+        //stop bar at end of epoch
+        bar1.stop()
+
+        // print out details
+        console.log(
+            "cost:",cost,
+            "epoch",epoch,
+            "acc:",acc.t*BATCH_SIZE/10,"%",acc.f*BATCH_SIZE/10,"%"
+        );
+        //Write in logs
+        fs.writeFileSync('logs\\Info2.json', JSON.stringify(Data));
+
+        //Save network
+        network.save("Net1")
+        conv.saveFilters("Conv")
+        conv2.saveFilters("Conv2")
+        mxPool1.savePool("Pool")
+    }
 }
-fs.writeFileSync('logs\\Info2.json', JSON.stringify(Data));
+
+
+
 
 
 // network.train({

@@ -13,30 +13,36 @@ def MA(vec,sample):
 with open("logs\Info2.json") as f:
     data = json.load(f)
 
-cost = np.array(data["cost"])
-alpha = np.array(data["alpha"])
-beta = np.array(data["beta"])
+cost = np.array(data[0]["cost"][:-1])
+alpha = np.array(data[0]["alpha"])
+beta = np.array(data[0]["beta"])
 
 
 def get_points(a,b,c):
-    p = []
-    for i,e in enumerate(a):
-        for j,q in enumerate(b[i]):
-            p.append([e,q,c[i,j]])
-    return np.array(p)
-
+    points = []
+    for i,e in enumerate(c):
+        points.append([ a[int(np.floor(i/len(a)))], b[i%len(b)], e])
+    return points
 fig = plt.figure()
 ax = plt.axes(projection='3d')
 
 print(cost.shape,alpha.shape,beta.shape)
-points = get_points(alpha,beta,cost)
-print(points,points.shape)
+for step in range(len(cost)):
+    points = np.array(get_points(alpha,beta,cost[step]))
 
-ax.plot_trisurf(points[:,0], points[:,1], points[:,2], cmap=cm.jet, linewidth=0.1);
-for i in range(0,360,1):
-    ax.azim = i
-    print(i)
-    plt.savefig(f"Images/input{i}.png")
+    img = ax.plot_trisurf(points[:,0],points[:,1],points[:,2],cmap=cm.jet, vmin= 0, vmax = 4)
+    ax.set_xlabel(r'$\alpha$')
+    ax.set_ylabel(r'$\beta$')
+    ax.set_zlabel(r'$cost$')
+    ax.set_zlim3d(0, 4)
+    plt.pause(0.1)
+    plt.cla()
+
+plt.show()
+# for i in range(0,360,1):
+#     ax.azim = i
+#     print(i)
+#     plt.savefig(f"Images/input{i}.png")
 
 # step = []
 # pred = []

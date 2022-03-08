@@ -13,7 +13,7 @@ def MA(vec,sample):
 with open("logs\Info2.json") as f:
     data = json.load(f)
 
-cost = np.array(data[0]["cost"][:-1])
+cost = np.array(data[0]["cost"])
 alpha = np.array(data[0]["alpha"])
 beta = np.array(data[0]["beta"])
 
@@ -27,22 +27,23 @@ fig = plt.figure()
 ax = plt.axes(projection='3d')
 
 print(cost.shape,alpha.shape,beta.shape)
-for step in range(len(cost)):
+for step in range(323,len(cost)):
     points = np.array(get_points(alpha,beta,cost[step]))
 
-    img = ax.plot_trisurf(points[:,0],points[:,1],points[:,2],cmap=cm.jet, vmin= 0, vmax = 4)
+    img = ax.plot_trisurf(points[:,0],points[:,1],points[:,2],cmap=cm.jet, vmin= 0, vmax = 1)
     ax.set_xlabel(r'$\alpha$')
     ax.set_ylabel(r'$\beta$')
     ax.set_zlabel(r'$cost$')
-    ax.set_zlim3d(0, 4)
-    plt.pause(0.1)
-    plt.cla()
+    # ax.set_zlim3d(0, 1)
+    ax.azim = step
+    ax.elev = 38
+    plt.savefig(f"Images/input{step}.png")
+    ax.cla()
+    print(step)
 
-plt.show()
 # for i in range(0,360,1):
 #     ax.azim = i
 #     print(i)
-#     plt.savefig(f"Images/input{i}.png")
 
 # step = []
 # pred = []

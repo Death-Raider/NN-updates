@@ -217,6 +217,7 @@ class NeuralNetwork extends LinearAlgebra{
     if(!fs.existsSync(folder)) fs.mkdirSync(folder);
     writeData(this.Weights,folder,"Weights",'W')
     writeData(this.Bias,folder,"Bias",'B')
+
     function writeData(arr,folder,slice,initilizer){
       if(!fs.existsSync(`${folder}/${slice}`)) fs.mkdirSync(`${folder}/${slice}`);
       for(let i = 0; i < arr.length; i++){
@@ -237,26 +238,34 @@ class NeuralNetwork extends LinearAlgebra{
     }
   }
   async load(path){
-    function getLines(folder,res){
-      const readline  = require('readline');
-      const fs = require('fs');
-      let sub_dir = fs.readdirSync(folder)
-      let readInterface, lines=[];
-      for(let s in sub_dir){
-        let files = fs.readdirSync(`${folder}/${sub_dir[s]}`)
+
+    const readline  = require('readline');
+    const fs = require('fs');
+    let sub_dir = fs.readdirSync(path)
+    let readInterface, lines=[];
+
+    for(let s in sub_dir){
+        let files = fs.readdirSync(`${path}/${sub_dir[s]}`)
         lines[s] = []
         for(let f in files){
           lines[s][f] = [];
-          readInterface = readline.createInterface({input: fs.createReadStream(`${folder}/${sub_dir[s]}/${files[f]}`)});
-          readInterface.on('line', function(line){lines[s][f].push(JSON.parse(line))});
+          let readLinePromise = new Promise((res,rej)=>{
+              let promiseArr = []
+              readInterface = readline.createInterface({
+                  input: fs.createReadStream(`${path}/${sub_dir[s]}/${files[f]}`)
+              });
+              readInterface.on('line', function(line){
+                  promiseArr.push(JSON.parse(line))
+              });
+              readInterface.on('close', ()=>{res(promiseArr)});
+          })
+          lines[s][f].push(await readLinePromise)
         }
-      }
-      readInterface.on('close', ()=>{res(lines)});
     }
-    let model = new Promise(function(resolve, reject){getLines(path,resolve)});
-    model = await model;
-    this.Bias = model[0].flat();
-    this.Weights = model[1];
+    let model = lines
+    // model = await model;
+    this.Bias = model[0].flat(2);
+    this.Weights = model[1].flat(1);
   }
 }
 

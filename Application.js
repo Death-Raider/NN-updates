@@ -199,6 +199,5 @@ function Train(){
         network.save("Net1")
         conv.saveFilters("Conv")
         conv2.saveFilters("Conv2")
-        mxPool1.savePool("Pool")
     }
 }
